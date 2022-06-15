@@ -1,4 +1,5 @@
 import sys
+from tkinter import CASCADE
 from django.utils.timezone import now
 try:
     from django.db import models
@@ -64,8 +65,8 @@ class Course(models.Model):
     is_enrolled = False
 
     def __str__(self):
-        return "Name: " + self.name + "," + \
-               "Description: " + self.description
+        return "Name: " + self.name 
+               
 
 
 # Lesson model
@@ -93,7 +94,35 @@ class Enrollment(models.Model):
     date_enrolled = models.DateField(default=now)
     mode = models.CharField(max_length=5, choices=COURSE_MODES, default=AUDIT)
     rating = models.FloatField(default=5.0)
+    
 
+class Question(models.Model):
+    question_text = models.TextField(max_length=400)
+    grade = models.IntegerField()
+    course = models.ForeignKey(Course,on_delete= models.SET_NULL,null=True)
+    lesson = models.ForeignKey(Lesson,on_delete=models.CASCADE,null=True)
+
+    def is_get_score(self, selected_ids):
+        all_answers = self.choice_set.filter(is_correct=True).count()
+        selected_choices = self.choice_set.filter(id__in=selected_ids)
+        
+        selected_correct = selected_choices.count()
+        
+        if all_answers == selected_correct:
+            i=0
+            for choice in selected_choices:
+                if not choice.is_correct :
+                    i=1
+            if i==1:
+                return False
+            else:
+                return True
+        else:
+                return False        
+
+
+    def __str__(self):
+        return self.course.name + " question" + str(self.pk)
 
 # <HINT> Create a Question Model with:
     # Used to persist question content for a course
@@ -102,18 +131,12 @@ class Enrollment(models.Model):
     # Has question content
     # Other fields and methods you would like to design
 #class Question(models.Model):
-    # Foreign key to lesson
+    # Foreign key to lesson/course
     # question text
     # question grade/mark
 
     # <HINT> A sample model method to calculate if learner get the score of the question
-    #def is_get_score(self, selected_ids):
-    #    all_answers = self.choice_set.filter(is_correct=True).count()
-    #    selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-    #    if all_answers == selected_correct:
-    #        return True
-    #    else:
-    #        return False
+  
 
 
 #  <HINT> Create a Choice Model with:
@@ -122,13 +145,18 @@ class Enrollment(models.Model):
     # Choice content
     # Indicate if this choice of the question is a correct one or not
     # Other fields and methods you would like to design
-# class Choice(models.Model):
-
+class Choice(models.Model):
+    question = models.ForeignKey(Question,on_delete=models.CASCADE,null=True)
+    choice_text  = models.TextField(max_length=400)
+    is_correct = models.BooleanField()
+    def __str__(self):
+        return self.question.course.name + ' question choice' + str(self.pk)
+   
 # <HINT> The submission model
 # One enrollment could have multiple submission
 # One submission could have multiple choices
 # One choice could belong to multiple submissions
-#class Submission(models.Model):
-#    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-#    choices = models.ManyToManyField(Choice)
+class Submission(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    choices = models.ManyToManyField(Choice)
 #    Other fields and methods you would like to design
