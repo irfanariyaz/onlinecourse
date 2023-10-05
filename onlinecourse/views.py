@@ -16,6 +16,7 @@ from django.contrib.auth import login, logout, authenticate
 import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
+
 # Create your views here.
 
 
@@ -84,6 +85,7 @@ class CourseListView(generic.ListView):
     def get_queryset(self):
         user = self.request.user
         courses = Course.objects.order_by('-total_enrollment')[:10]
+        print("courses",courses)
         for course in courses:
             if user.is_authenticated:
                 course.is_enrolled = check_if_enrolled(user, course)
@@ -127,7 +129,8 @@ def Submit(request,course_id):
         for ans in answers_choice:
             choice = Choice.objects.get(id = ans)
             submission.choices.add(choice)
-           
+ #    submission.choices.set(answers_choice)
+
                                  
     return HttpResponseRedirect(reverse('onlinecourse:show_exam_result',args=(course.id,submission.id)))
    
